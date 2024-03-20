@@ -56,81 +56,75 @@ def get_valid_actions(player_state):
 
 def check_ended(env):
     turn = env[NUMBER_ROWS * NUMBER_COLS + 2] - 1
-    
-    # Case 1: all tie
-    check_sum = 0
-    for i in range(NUMBER_COLS):
-        for j in range(NUMBER_ROWS):
-            if (env[convert_to_1D(i, j)] != 0): check_sum += 1
-                
-    if (check_sum == NUMBER_ROWS * NUMBER_COLS):
+
+    # Case 1:
+    p_id = turn % 2
+    x = env[NUMBER_ROWS * NUMBER_COLS]
+    y = env[NUMBER_ROWS * NUMBER_COLS + 1]
+
+    # Check row
+    count = 1
+    d = 1
+    while y + d < NUMBER_COLS and env[convert_to_1D(x, y + d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+    d = 1
+    while y - d > -1 and env[convert_to_1D(x, y - d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+
+    # Check col
+    count = 1
+    d = 1
+    while x + d < NUMBER_ROWS and env[convert_to_1D(x + d, y)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+    d = 1
+    while x - d > -1 and env[convert_to_1D(x - d, y)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+
+    # Check diagonal line C1
+    count = 1
+    d = 1
+    while x + d < NUMBER_ROWS and y + d < NUMBER_COLS and env[convert_to_1D(x + d, y + d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+    d = 1
+    while x - d > -1 and y - d > -1 and env[convert_to_1D(x - d, y - d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+
+    # Check diagonal line C2
+    count = 1
+    d = 1
+    while x + d < NUMBER_ROWS and y - d > -1 and env[convert_to_1D(x + d, y - d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+    d = 1
+    while x - d > -1 and y + d < NUMBER_COLS and env[convert_to_1D(x - d, y + d)] == p_id + 1:
+        count += 1
+        if count == 5:
+            return p_id
+        d += 1
+
+    # Case 2: all tie
+    if (turn + 1 == NUMBER_ROWS * NUMBER_COLS):
         return 2
-
-    # Case 2:
-    else:
-        p_id = turn % 2
-        x = env[NUMBER_ROWS * NUMBER_COLS]
-        y = env[NUMBER_ROWS * NUMBER_COLS + 1]
-
-        # Check row
-        count = 1
-        d = 1
-        while y + d < NUMBER_COLS and env[convert_to_1D(x, y + d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-        d = 1
-        while y - d > -1 and env[convert_to_1D(x, y - d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-
-        # Check col
-        count = 1
-        d = 1
-        while x + d < NUMBER_ROWS and env[convert_to_1D(x + d, y)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-        d = 1
-        while x - d > -1 and env[convert_to_1D(x - d, y)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-
-        # Check diagonal line C1
-        count = 1
-        d = 1
-        while x + d < NUMBER_ROWS and y + d < NUMBER_COLS and env[convert_to_1D(x + d, y + d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-        d = 1
-        while x - d > -1 and y - d > -1 and env[convert_to_1D(x - d, y - d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-
-        # Check diagonal line C2
-        count = 1
-        d = 1
-        while x + d < NUMBER_ROWS and y - d > -1 and env[convert_to_1D(x + d, y - d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
-        d = 1
-        while x - d > -1 and y + d < NUMBER_COLS and env[convert_to_1D(x - d, y + d)] == p_id + 1:
-            count += 1
-            if count == 5:
-                return p_id
-            d += 1
 
     return -1
 
@@ -209,14 +203,10 @@ def cpu_run_one_game(p_main, p_o, per, print_mode = False):
         elif check_ended(env) == 1:
             print('\n---------------------- Winner: O ----------------------')
 
-    winner = 0
-    if (check_ended(env) == 2):
+    winner = check_ended(env)
+    if (winner == 2):
         winner = -1
-    elif (check_ended(env) == 1):
-        winner = 1
-    else:
-        winner = 0
-
+        
     return winner, per
 
 def cpu_run_n_game(p0, p1, per, num_game, print_mode = False):
