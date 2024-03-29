@@ -7,10 +7,72 @@ import torch.nn as nn
 import torch.nn.functional as F
 # Notice that NUMBER_ROWS = NUMBER_COLS
 
+# Cấu trúc của mạng học sâu
+
+###??? Tìm hiểu thêm về các module trong layer.
 class ResNet(nn.Module):
-    def __init__(self, num_resBlock) -> None:
-        pass
+    def __init__(self, num_resBlock, num_hidden) -> None:
+        super().__init__()
+        # Layer Input
+        ## Chuyển hóa encode env thành các input cho layer backBone
+        self.startBlock = nn.Sequential(
+            nn.Conv2d(3, num_hidden, kernel_size=3, padding=1),
+            nn.BatchNorm2d(num_hidden),
+            nn.ReLU()
+        )
+
+        # Layer backBone bao gồm các RestBlock
+        self.backBone = nn.ModuleList(
+            [RestBlock(num_hidden) for _n in range(num_resBlock)]
+        )
         
+        ## Huấn luyện động thời 2 layer
+        # Layer output policyHead đưa ra prior probability
+        self.policyHead = nn.Sequential(
+            nn.Conv2d(num_hidden, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(32 * NUMBER_ROWS * NUMBER_COLS, NUMBER_ACTIONS)
+        )
+
+        # Layer output đưa ra giá trị của env
+        self.valueHead = nn.Sequential(
+            nn.Conv2d(num_hidden, 3, kernel_size=3, padding=1),
+            nn.BatchNorm2d(3),
+            nn.ReLU(),
+            nn.Flatten(),
+            nn.Linear(3 * NUMBER_ROWS * NUMBER_COLS, 1),
+            nn.Tanh()
+        )
+    
+    # Hàm mô quá đường đi của dữ encode env x khi xử lý qua mạng
+    def forward(self, x):
+        x = self.startBlock(x)
+        for resBlock in self.backBone:
+            x = resBlock.forward(x)
+        policy = self.policyHead(x)
+        value = self.valueHead(x)
+        return policy, value
+
+# Các block liên tiếp trong layer backBone của cấu trúc Residual neural network       
+class RestBlock(nn.Module):
+    def __init__(self, num_hidden):
+        super().__init__()
+        self.conv1 = nn.Conv2d(num_hidden, num_hidden, kernel_size=3, padding=1)
+        self.batchn1 = nn.BatchNorm2d(num_hidden)
+        self.conv2 = nn.Conv2d(num_hidden, num_hidden, kernel_size=3, padding=1)
+        self.batchn2 = nn.BatchNorm2d(num_hidden)
+    
+    # _x được lấy dư và cộng đồng thời với output thông qua xử lý của RestBlock
+    def forward(self, x):
+        residual = x
+        x = F.relu(self.batchn1(self.conv1(x)))
+        x = self.batchn2(self.conv2(x))
+        x += residual
+        x = F.relu(x)
+        return x
+
 
 class Node:
     def __init__(self, args, env, parent = None, action_taken = None) -> None:
@@ -145,6 +207,7 @@ warnings.simplefilter('ignore', category = NumbaPendingDeprecationWarning)
 warnings.simplefilter('ignore', category = NumbaExperimentalFeatureWarning)
 warnings.simplefilter('ignore', category = NumbaWarning)
 
+# Biến chứa các hằng phục vụ cho MCTS
 args = {
     'C' : 1.41,
     'num_searches': 1000
@@ -331,6 +394,7 @@ def numba_run_one_game(p_main, p_o, per, print_mode = False):
     if (winner == 2):
         winner = -1
     return winner, per
+
 @njit
 def numba_run_n_game(p0, p1, per, num_game, print_mode = False):
     win = [0, 0]
@@ -361,11 +425,14 @@ def change_perspective(env):
     n_env[temp] = 1
     return n_env
 
+# Hàm in ra bàn cờ game
 def print_env(env):
     for i in range(NUMBER_COLS):
         print(env[i * 15 : i * 15 + 15])
     print(env[NUMBER_ROWS * NUMBER_COLS : NUMBER_ROWS * NUMBER_COLS + 3])
 
+
+# Hàm test MCTS
 def one_game_pvc():
     mcts = MCTS(args)
     env = init_env()
@@ -395,5 +462,34 @@ def one_game_pvc():
                 print('\n---------------------- Winner: Comp ----------------------')
             
             break
-        
+
+## Encode env thành 3 tensor (3, 15, 15) gồm:
+# Gồm các nước đối phương đã đi
+# Các nước có thể đi
+# Các nước mà bản thân đã đi
+def get_encode_state(env):
+    env = np.reshape(env[ : 225], (15, 15))
+    encode_state = np.stack(
+        (env == 2, env == 0, env == 1)
+    ).astype(np.float32)
+    return encode_state
+
 # one_game_pvc()
+
+# Code test RestNet
+env = init_env()
+env = next_step(23, env)
+env = next_step(25, env)
+
+encode_state = get_encode_state(env)
+
+tensor_state = torch.tensor(encode_state).unsqueeze(0)
+
+model = ResNet(4, 64)
+
+policy, value = model(tensor_state)
+
+value = value.item()
+policy = torch.softmax(policy, 1).squeeze(0).detach().cpu().numpy()
+
+print(value, policy)
