@@ -6,9 +6,9 @@ def evaluate(p_state,player):
     if check_ended(p_state)!=-1:
         # Trả về vô cùng nếu máy thắng
         if check_ended(p_state)==player%2:
-            return 999999999999999999999999999999999
+            return math.inf
         elif check_ended(p_state)== (player+1)%2:
-            return -999999999999999999999999999999999 # Trả về âm vô cùng nếu người thắng
+            return -math.inf # Trả về âm vô cùng nếu người thắng
         else:
             return 0 #tra ve 0 neu hoa
     # Tổng điểm của máy
@@ -737,7 +737,7 @@ def evaluate(p_state,player):
             if yy + i < NUMBER_COLS and xx + i <NUMBER_ROWS and p_state[id+i+i*NUMBER_COLS] == 0:
                 nSpace += 1
             if i == 4 and yy + i < NUMBER_COLS and xx + i < NUMBER_ROWS:
-                if (yy + i == NUMBER_COLS - 1 or xx + i == NUMBER_ROWS - 1) and chessT[xx + i][yy + i] == HUMAN[0]:
+                if (yy + i == NUMBER_COLS - 1 or xx + i == NUMBER_ROWS - 1) and p_state[id+i+i*NUMBER_COLS] == (player+1)%2+1:
                     if i - nSpace == 3:
                         num4_Human_Block += 1
                     elif i - nSpace == 2:
@@ -752,7 +752,7 @@ def evaluate(p_state,player):
                         else:
                             num2_Human += 1
                     elif i - nSpace == 2:
-                        if chessT[xx + i][yy + i] == HUMAN[0]:
+                        if  p_state[id+i+i*NUMBER_COLS] == (player+1)%2+1:
                             num3_Human_Block += 1
                         else:
                             if a:
@@ -760,7 +760,7 @@ def evaluate(p_state,player):
                             else:
                                 num3_Human += 1
                     elif i - nSpace == 3:
-                        if chessT[xx + i][yy + i] == HUMAN[0]:
+                        if p_state[id+i+i*NUMBER_COLS] == (player+1)%2+1:
                             num4_Human_Block += 1
                         else:
                             if a:
@@ -774,15 +774,15 @@ def evaluate(p_state,player):
                     if i - nSpace - 1 == 1:
                         num2_Human_Block += 1
                     elif i - nSpace - 1 == 2:
-                        if chessT[xx + i - 1][yy + i - 1] == ' ':
-                            if xx - 2 >= 0 and yy - 2 >= 0 and chessT[xx - 2][yy - 2] == ' ':
+                        if p_state[id+(i-1)+(i-1)*NUMBER_COLS] == 0:
+                            if xx - 2 >= 0 and yy - 2 >= 0 and p_state[id-2-2*NUMBER_COLS] == 0:
                                 num3_Human += 1
                             else:
                                 num3_Human_Block += 1
                         else:
                             if nSpace == 1:
                                 num3_Human_Block += 1
-                            elif xx - 2 >= 0 and yy - 2 >= 0 and chessT[xx - 2][yy - 2] == ' ':
+                            elif xx - 2 >= 0 and yy - 2 >= 0 and p_state[id-2-2*NUMBER_COLS] == 0:
                                 num3_Human_Block += 1
                     elif i - nSpace - 1 == 3:
                         num4_Human_Block += 1
@@ -790,14 +790,14 @@ def evaluate(p_state,player):
         
         # ĐẾM THEO ĐƯỜNG CHÉO C2 /
         b = False
-        if yy + 1 < NUMBER_COLS and xx > 0 and chessT[xx - 1][yy + 1] == HUMAN[0]:
+        if yy + 1 < NUMBER_COLS and xx > 0 and p_state[id+1-1*NUMBER_COLS] == (player+1)%2+1:
             b = True
-        if not b and yy - 2 >= 0 and xx + 2 < NUMBER_ROWS  and chessT[xx + 1][yy - 1] == ' ' and chessT[xx + 2][yy - 2] == ' ':
+        if not b and yy - 2 >= 0 and xx + 2 < NUMBER_ROWS  and p_state[id-1+1*NUMBER_COLS] == 0 and p_state[id-2+2*NUMBER_COLS] == 0:
             b = True
 
         a = False
         nSpace = 0
-        if yy < NUMBER_COLS - 1 and xx > 0 and chessT[xx - 1][yy + 1] == COMP[0]:
+        if yy < NUMBER_COLS - 1 and xx > 0 and p_state[id+1-1*NUMBER_COLS] == (player)%2+1:
             a = True
         if yy == NUMBER_COLS - 1 or xx == 0:
             a = True
@@ -805,17 +805,17 @@ def evaluate(p_state,player):
         for i in range(1, 5):
             if b:
                 break
-            if yy - i >= 0 and xx + i < NUMBER_ROWS and chessT[xx + i][yy - i] == COMP[0]:
+            if yy - i >= 0 and xx + i < NUMBER_ROWS and p_state[id-i+i*NUMBER_COLS] == (player)%2+1:
                 if a:
                     break
                 else:
-                    if chessT[xx + i - 1][yy - i + 1] != ' ':
+                    if p_state[id-(i-1)+(i-1)*NUMBER_COLS] != 0:
                         if i - nSpace - 1 == 1:
                             num2_Human_Block += 1
                         elif i - nSpace - 1 == 2:
                             if nSpace == 1:
                                 num3_Human_Block += 1
-                            elif xx - 2 >= 0 and yy + 2 < NUMBER_COLS and chessT[xx - 2][yy + 2] == ' ':
+                            elif xx - 2 >= 0 and yy + 2 < NUMBER_COLS and p_state[id+2-2*NUMBER_COLS] == 0:
                                 num3_Human_Block += 1
                         elif i - nSpace - 1 == 3:
                             num4_Human_Block += 1
@@ -823,15 +823,15 @@ def evaluate(p_state,player):
                         if i - nSpace - 1 == 1:
                             num2_Human += 1
                         elif i - nSpace - 1 == 2:
-                            if yy + 2 < NUMBER_COLS and xx - 2 >= 0 and chessT[xx - 2][yy + 2] == ' ':
+                            if yy + 2 < NUMBER_COLS and xx - 2 >= 0 and p_state[id+2-2*NUMBER_COLS] == 0:
                                 num3_Human += 1
                             else:
                                 num3_Human_Block += 1
                     break
-            if yy - i >= 0  and xx + i < NUMBER_ROWS and chessT[xx + i][yy - i] == ' ':
+            if yy - i >= 0  and xx + i < NUMBER_ROWS and  p_state[id-i+i*NUMBER_COLS] == 0:
                 nSpace += 1
             if i == 4 and yy - i >= 0  and xx + i < NUMBER_ROWS:
-                if (yy - i == 0 or xx + i == NUMBER_ROWS - 1) and chessT[xx + i][yy - i] == HUMAN[0]:
+                if (yy - i == 0 or xx + i == NUMBER_ROWS - 1) and p_state[id-i+i*NUMBER_COLS] == (player+1)%2+1:
                     if i - nSpace == 3:
                         num4_Human_Block += 1
                     elif i - nSpace == 2:
@@ -846,7 +846,7 @@ def evaluate(p_state,player):
                         else:
                             num2_Human += 1
                     elif i - nSpace == 2:
-                        if chessT[xx + i][yy - i] == HUMAN[0]:
+                        if p_state[id-i+i*NUMBER_COLS] == (player+1)%2+1:
                             num3_Human_Block += 1
                         else:
                             if a:
@@ -854,7 +854,7 @@ def evaluate(p_state,player):
                             else:
                                 num3_Human += 1
                     elif i - nSpace == 3:
-                        if chessT[xx + i][yy - i] == HUMAN[0]:
+                        if p_state[id-i+i*NUMBER_COLS] == (player+1)%2+1:
                             num4_Human_Block += 1
                         else:
                             if a:
@@ -868,39 +868,41 @@ def evaluate(p_state,player):
                     if i - nSpace - 1== 1:
                         num2_Human_Block += 1
                     elif i - nSpace - 1== 2:
-                        if chessT[xx + i - 1][yy - i + 1] == ' ':
-                            if xx - 2 >= 0 and yy + 2 < NUMBER_COLS and chessT[xx - 2][yy + 2] == ' ':
+                        if  p_state[id-(i-1)+(i-1)*NUMBER_COLS] == 0:
+                            if xx - 2 >= 0 and yy + 2 < NUMBER_COLS and p_state[id+2-2*NUMBER_COLS] == 0:
                                 num3_Human += 1
                             else:
                                 num3_Human_Block += 1
                         else:
                             if nSpace == 1:
                                 num3_Human_Block += 1
-                            elif xx - 2 >= 0 and yy + 2 < NUMBER_COLS and chessT[xx - 2][yy + 2] == ' ':
+                            elif xx - 2 >= 0 and yy + 2 < NUMBER_COLS and p_state[id+2-2*NUMBER_COLS] == 0:
                                 num3_Human_Block += 1
                     elif i - nSpace - 1== 3:
                         num4_Human_Block += 1
                     break
         
-        if xx + 1 < NUMBER_ROWS and chessT[xx + 1][yy] == COMP[0]:
+        if xx + 1 < NUMBER_ROWS and p_state[id+1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-        if yy + 1 < NUMBER_COLS and chessT[xx][yy + 1] == COMP[0]:
+        if yy + 1 < NUMBER_COLS and p_state[id+1] == (player)%2+1:
             near_By_Human += 1
-        if xx > 0 and chessT[xx - 1][yy] == COMP[0]:
+        if xx > 0 and p_state[id-1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-        if yy > 0 and chessT[xx][yy - 1] == COMP[0]:
+        if yy > 0 and p_state[id-1] == (player)%2+1:
             near_By_Human += 1
-        if xx + 1 < NUMBER_ROWS and yy + 1 < NUMBER_COLS and chessT[xx + 1][yy + 1] == COMP[0]:
+        if xx + 1 < NUMBER_ROWS and yy + 1 < NUMBER_COLS and p_state[id+1+1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-        if xx + 1 < NUMBER_ROWS and yy > 0 and chessT[xx + 1][yy - 1] == COMP[0]:
+        if xx + 1 < NUMBER_ROWS and yy > 0 and p_state[id-1+1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-        if yy + 1 < NUMBER_COLS and xx > 0 and chessT[xx - 1][yy + 1] == COMP[0]:
+        if yy + 1 < NUMBER_COLS and xx > 0 and  p_state[id+1-1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-        if yy > 0 and xx > 0 and chessT[xx - 1][yy - 1] == COMP[0]:
+        if yy > 0 and xx > 0 and p_state[id-1-1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
     
 
     # Công thức tính điểm bàn cờ của hàm heuristic h(n)
+
+    turn = p_state[NUMBER_ACTIONS+2]
     ## Trong trường hợp player là người, tức nước đi vừa rồi là của máy đánh
     if turn%2 == player:
         # Nếu máy đánh xong mà bàn cờ vẫn còn 4 ký tự người liên tục ( dù bị block hay không ) thì người thắng
@@ -947,6 +949,33 @@ def evaluate(p_state,player):
         total_Score_Comp = near_By_Comp + 20 * num2_Comp_Block + 100 * num2_Comp + 4000 * num3_Comp_Block + num3_Comp * 30000000
         return total_Score_Comp - total_Score_Human
 
+# Hàm kiểm tra xem tọa độ có "tệ hay không"
+def checkBad_Point(act, p_state):
+    xx,yy = convert_to_2D(act)
+    # 1
+    if xx + 1 < NUMBER_ROWS and p_state[act+NUMBER_COLS] != 0:
+        return False
+    # 2
+    if yy + 1 < NUMBER_COLS and p_state[act+1] != 0:
+        return False
+    # 3
+    if xx > 0 and p_state[act-NUMBER_COLS] != 0:
+        return False
+    # 4
+    if yy > 0 and p_state[act-1] != 0:
+        return False
+    # 5
+    if xx + 1 < NUMBER_ROWS and yy + 1 < NUMBER_COLS and p_state[act+1+NUMBER_COLS] != 0:
+        return False
+    # 6
+    if xx + 1 < NUMBER_ROWS and yy > 0 and p_state[act-1+NUMBER_COLS] != 0:
+        return False
+    # 7
+    if yy + 1 < NUMBER_COLS and xx > 0 and p_state[act+1-NUMBER_COLS] != 0:
+        return False
+    # 8
+    if yy > 0 and xx > 0 and p_state[act-1-NUMBER_COLS] != 0:
+        return False
 def minimax(p_state, depth, alpha, beta, player):
     # Lượt hiện tại
     turn = p_state[NUMBER_COLS*NUMBER_ROWS+2]
@@ -968,7 +997,7 @@ def minimax(p_state, depth, alpha, beta, player):
     for act in val_act:
        
         # Bỏ qua nếu tọa độ đưa vào đủ " tệ "
-        if checkBad_Point(act):
+        if checkBad_Point(act,p_state):
             continue
         # Nhét nước đi này vào kho chứa các nước đã đi của player để có thể đánh giá bàn cờ ở hàm evaluate(state, player, x, y)
         p_state = next_step(act,p_state)
@@ -1006,5 +1035,6 @@ def numba_bot_greedy(p_state, per):
     move = minimax(p_state, depth, -math.inf, math.inf, player)
     act_idx=move[0]
     return act_idx, per
+
 
 
