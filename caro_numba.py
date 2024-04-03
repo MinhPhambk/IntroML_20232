@@ -7,6 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 # Notice that NUMBER_ROWS = NUMBER_COLS
 
+torch.manual_seed(0)
+
 # Cấu trúc của mạng học sâu
 
 ###??? Tìm hiểu thêm về các module trong layer.
@@ -75,7 +77,7 @@ class RestBlock(nn.Module):
 
 
 class Node:
-    def __init__(self, args, env, parent = None, action_taken = None) -> None:
+    def __init__(self, args, env, parent = None, action_taken = None, prior = 0) -> None:
         # args: chứa những thông tin để sử dụng hoặc kết thúc thuật toán
         self.args = args
         # env: môi trường ( state cũng được ) của node
@@ -84,11 +86,15 @@ class Node:
         self.parent = parent
         # action_taken: từ node cha đánh nước đi act này được node con
         self.action_taken = action_taken
+        # Xác suất chọn nước đi này từ nước đi cha dựa trên policy do mạng đưa ra
+        self.prior = prior
 
         # children: list các node con của node hiện tại
         self.children = []
-        # expandable_moves: các nước đi có thể đi tính từ node hiện tại
-        self.expandable_moves = get_valid_actions(self.env)
+
+        ### Node sẽ được mở rộng tất cả node con cùng một lúc, tạm thời không dùng thuộc tính này
+        # # expandable_moves: các nước đi có thể đi tính từ node hiện tại
+        # self.expandable_moves = get_valid_actions(self.env)
 
         ## Variable MCTS algorithm
         # visit_count: số lần đã đi qua node hiện tại
@@ -98,7 +104,8 @@ class Node:
 
     # Hàm kiểm tra xem node hiện tại có phải là node mở rộng hoàn toàn rồi hay chưa
     def is_fully_expanded(self):
-        return np.sum(self.expandable_moves) == 0 and len(self.children) > 0
+        # return np.sum(self.expandable_moves) == 0 and len(self.children) > 0
+        return len(self.children) > 0
 
     # Thuật toán chọn node có UCB lớn nhất
     def select(self):
@@ -117,42 +124,51 @@ class Node:
     def cal_ucb(self, child):
         # Cần đưa đối thủ vào trạng thái bất lợi nhất, tức q_value lớn nhất.
         ## + 1 rồi / 2 để giữ cho q_value trong [0, 1]
-        q_value = 1 - ((child.value_sum / child.visit_count) + 1) / 2
-        return q_value + self.args['C'] * math.sqrt(math.log(self.visit_count) / child.visit_count)
+        
+        # Trong trường hợp node con chưa được thăm dò một lần nào, thành phần khai thác trong ucb = 0
+        if child.visit_count == 0:
+            q_value = 0
+        else:
+            q_value = 1 - ((child.value_sum / child.visit_count) + 1) / 2
+        return q_value + self.args['C'] * (math.sqrt(self.visit_count) / ( child.visit_count + 1)) * child.prior
 
     # Hàm mở rộng hay thêm một nốt con vào nốt hiện tại
-    def expand(self):
-        act = np.random.choice(np.where(self.expandable_moves == 1)[0])
-        self.expandable_moves[act] = 0
-        child_env = next_step(act, self.env)
-        child_env = change_perspective(child_env)
-        child = Node(self.args, child_env, self, act)
-        self.children.append(child)
-        return child
+    def expand(self, policy):
+        for act, prob in enumerate(policy):
+            if prob > 0:
+                # act = np.random.choice(np.where(self.expandable_moves == 1)[0])
+                # self.expandable_moves[act] = 0
+                child_env = next_step(act, self.env)
+                child_env = change_perspective(child_env)
+                child = Node(self.args, child_env, self, act, prob)
+                self.children.append(child)
+                # return child
 
-    # Hàm mô phỏng bàn cờ với các nước đi ngẫu nhiên cho tới cuối cùng
-    def simulation(self):
-        check_win = check_ended(self.env) if not self.action_taken == None else -1
-        if check_win == 1 or check_win == 0:
-            ## Return value ở đây luôn mang giá trị -1, vì người chơi hiện tại chưa đánh mà bàn cờ đã kết thúc => thua
-            return -1
-            # return -1
-        rollout_env = np.copy(self.env)
-        valid_move = get_valid_actions(rollout_env)
-        while True:
-            act = np.random.choice(np.where(valid_move == 1)[0])
-            valid_move[act] = 0
-            rollout_env = next_step(act, rollout_env)
-            check_win = check_ended(rollout_env)
-            ## Return lại value đúng giá trị kết quả của bàn cờ.
-            if check_win != -1:
-                if check_win == 1:
-                    return -1
-                elif check_win == 2:
-                    return 0
-                else:
-                    return 1
+    ### Bỏ qua hàm này vì giá trị của bàn cờ được lấy ra từ mạng thay vì mô phỏng
+    # # Hàm mô phỏng bàn cờ với các nước đi ngẫu nhiên cho tới cuối cùng
+    # def simulation(self):
+    #     check_win = check_ended(self.env) if not self.action_taken == None else -1
+    #     if check_win == 1 or check_win == 0:
+    #         ## Return value ở đây luôn mang giá trị -1, vì người chơi hiện tại chưa đánh mà bàn cờ đã kết thúc => thua
+    #         return -1
+    #         # return -1
+    #     rollout_env = np.copy(self.env)
+    #     valid_move = get_valid_actions(rollout_env)
+    #     while True:
+    #         act = np.random.choice(np.where(valid_move == 1)[0])
+    #         valid_move[act] = 0
+    #         rollout_env = next_step(act, rollout_env)
+    #         check_win = check_ended(rollout_env)
+    #         ## Return lại value đúng giá trị kết quả của bàn cờ.
+    #         if check_win != -1:
+    #             if check_win == 1:
+    #                 return -1
+    #             elif check_win == 2:
+    #                 return 0
+    #             else:
+    #                 return 1
     # Hàm truyền ngược các giá trị value và visit_count lên root node
+
     def backpropagate(self, value):
         self.value_sum += value
         self.visit_count += 1
@@ -160,11 +176,13 @@ class Node:
             self.parent.backpropagate(-value)
 
 class MCTS:
-    def __init__(self, args) -> None:
+    def __init__(self, args, model) -> None:
         # args: chứa những thông tin để sử dụng hoặc kết thúc thuật toán
         self.args = args
+        self.model = model
 
-
+    # Không dùng data để train ngay lập tức mà chỉ sử dụng resnet để dự đoán policy và value
+    @torch.no_grad()
     def search(self, env):
         root = Node(self.args, env)
         for _search in range (self.args['num_searches']):
@@ -182,10 +200,26 @@ class MCTS:
 
 
             if check_win == -1:
+                # Dùng mạng đưa ra policy và value
+                policy, value = self.model(
+                    torch.tensor(get_encode_state(node.env)).unsqueeze(0)
+                )
+
+                # Các bước tinh chỉnh lại đầu ra của mạng
+                policy = torch.softmax(policy, 1).squeeze(0).cpu().numpy()
+                # Loại bỏ prior prob của những nước đã được đánh
+                valid_move = get_valid_actions(node.env)
+                policy *= valid_move
+
+                policy /= np.sum(policy)
+
+                value = value.item()
                 # Expansion phase:
-                node = node.expand()
-                # Simulation phase
-                value = node.simulation()
+                node.expand(policy)
+                
+                ### Bỏ qua bước simulation
+                # # Simulation phase
+                # value = node.simulation()
             # Backpropagation phase
             node.backpropagate(value)
         
@@ -209,7 +243,7 @@ warnings.simplefilter('ignore', category = NumbaWarning)
 
 # Biến chứa các hằng phục vụ cho MCTS
 args = {
-    'C' : 1.41,
+    'C' : 2,
     'num_searches': 1000
 }
 
@@ -434,7 +468,8 @@ def print_env(env):
 
 # Hàm test MCTS
 def one_game_pvc():
-    mcts = MCTS(args)
+    model = ResNet(4, 64)
+    mcts = MCTS(args, model)
     env = init_env()
     while True:
         print_env(env)
@@ -467,6 +502,7 @@ def one_game_pvc():
 # Gồm các nước đối phương đã đi
 # Các nước có thể đi
 # Các nước mà bản thân đã đi
+@njit()
 def get_encode_state(env):
     env = np.reshape(env[ : 225], (15, 15))
     encode_state = np.stack(
@@ -476,20 +512,21 @@ def get_encode_state(env):
 
 # one_game_pvc()
 
-# Code test RestNet
-env = init_env()
-env = next_step(23, env)
-env = next_step(25, env)
 
-encode_state = get_encode_state(env)
+# # Code test RestNet
+# env = init_env()
+# env = next_step(23, env)
+# env = next_step(25, env)
 
-tensor_state = torch.tensor(encode_state).unsqueeze(0)
+# encode_state = get_encode_state(env)
 
-model = ResNet(4, 64)
+# tensor_state = torch.tensor(encode_state).unsqueeze(0)
 
-policy, value = model(tensor_state)
+# model = ResNet(4, 64)
 
-value = value.item()
-policy = torch.softmax(policy, 1).squeeze(0).detach().cpu().numpy()
+# policy, value = model(tensor_state)
 
-print(value, policy)
+# value = value.item()
+# policy = torch.softmax(policy, 1).squeeze(0).detach().cpu().numpy()
+
+# print(value, policy)
