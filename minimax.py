@@ -998,7 +998,7 @@ def numba_bot_greedy(p_state, per):
     turn = np.count_nonzero(p_state[0:NUMBER_ACTIONS]) 
 
     if(turn==0):
-        return np.random.randint(0, NUMBER_ACTIONS),per
+        return np.rd.randint(0, NUMBER_ACTIONS),per
     p_state[NUMBER_COLS*NUMBER_ROWS+2]=turn
     player= turn%2
     depth = 4 
