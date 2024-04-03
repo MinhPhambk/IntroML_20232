@@ -997,7 +997,7 @@ def minimax(p_state, depth, alpha, beta, player):
     return best
 
 
-def numba_bot_minimax(p_state, per):
+def numba_bot_greedy(p_state, per):
 
     turn = np.count_nonzero(p_state[0:NUMBER_ACTIONS]) 
 
@@ -1011,9 +1011,4 @@ def numba_bot_minimax(p_state, per):
     act_idx=move[0]
     return act_idx, per
 
-def numba_bot_greedy(p_state, per):
-    arr_action = get_valid_actions(p_state)
-    
-
-    return act_idx
 
