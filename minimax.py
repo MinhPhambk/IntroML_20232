@@ -1,9 +1,5 @@
 import math
-import ramdom
-
 from IntroML_20232.caro_cpu import*
-
-import numpy as np
 
 def evaluate(p_state,player):
     # Nếu hết cờ
