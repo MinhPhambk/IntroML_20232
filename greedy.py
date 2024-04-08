@@ -1036,12 +1036,3 @@ def cpu_bot_greedy(p_state, per):
 
 
 
-per = None
-win, per = cpu_run_one_game(cpu_bot_greedy, cpu_bot_random, per)
-
-if (win == 0):
-    print("Your custom bot wins!")
-elif (win == 1):
-    print("The random bot wins!")
-elif (win == 2):
-    print("All tie!")
