@@ -1020,7 +1020,7 @@ def minimax(p_state, depth, alpha, beta, player):
             break  # Cắt tỉa alpha - beta
     return best
 
-def numba_bot_greedy(p_state, per):
+def cpu_bot_greedy(p_state, per):
 
     turn = np.count_nonzero(p_state[0:NUMBER_ACTIONS]) 
 
