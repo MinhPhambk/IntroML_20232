@@ -1,5 +1,6 @@
 import math
-from IntroML_20232.caro_cpu import*
+import numpy as np
+from caro_cpu import*
 
 def evaluate(p_state,player):
     # Nếu hết cờ
@@ -949,6 +950,7 @@ def evaluate(p_state,player):
         total_Score_Comp = near_By_Comp + 20 * num2_Comp_Block + 100 * num2_Comp + 4000 * num3_Comp_Block + num3_Comp * 30000000
         return total_Score_Comp - total_Score_Human
 
+
 # Hàm kiểm tra xem tọa độ có "tệ hay không"
 def checkBad_Point(act, p_state):
     xx,yy = convert_to_2D(act)
@@ -985,28 +987,25 @@ def minimax(p_state, depth, alpha, beta, player):
 
    
     if turn%2 == player:
-        best = [-1 , -math.inf]
+        best = [-1, -math.inf]
     else:
         best = [-1, math.inf]
     # Nếu độ sâu giảm tới 0 ( đoán trước tối đa depth nước đi ) hoặc bàn cờ đã hết cờ thì trả về giá trị của bàn cờ
     if depth == 0 or check_ended(p_state) != -1:
         sc = evaluate(p_state, player)
-        return [id, sc]
+        return [-1, sc]
    
-    val_act= get_valid_actions(p_state)
+    val_act = np.where(p_state[0:NUMBER_ACTIONS]==0)[0]
     for act in val_act:
        
         # Bỏ qua nếu tọa độ đưa vào đủ " tệ "
         if checkBad_Point(act,p_state):
             continue
         # Nhét nước đi này vào kho chứa các nước đã đi của player để có thể đánh giá bàn cờ ở hàm evaluate(state, player, x, y)
-        p_state = next_step(act,p_state)
+        env = next_step(act,p_state)
         
-        score = minimax(p_state, depth - 1, alpha, beta, player)
-        # Bỏ đánh dấu bàn cờ trong quay lui
-        p_state[act]= 0
-        p_state[NUMBER_COLS*NUMBER_ROWS+2]-=1
-        p_state[NUMBER_ACTIONS] , p_state[NUMBER_ACTIONS+1]= convert_to_2D(id)
+        score = minimax(env, depth - 1, alpha, beta, player)
+        score[0]= act
         # Cập nhật alpha và beta sau mỗi lần tìm kiếm trong 1 nhánh của minimax
         if turn%2 == player:
             if score[1] > best[1]:
@@ -1020,7 +1019,6 @@ def minimax(p_state, depth, alpha, beta, player):
         if beta <= alpha:
             break  # Cắt tỉa alpha - beta
     return best
-
 
 def numba_bot_greedy(p_state, per):
 
@@ -1038,3 +1036,12 @@ def numba_bot_greedy(p_state, per):
 
 
 
+per = None
+win, per = cpu_run_one_game(numba_bot_greedy, cpu_bot_random, per)
+
+if (win == 0):
+    print("Your custom bot wins!")
+elif (win == 1):
+    print("The random bot wins!")
+elif (win == 2):
+    print("All tie!")
