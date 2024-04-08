@@ -65,7 +65,7 @@ def evaluate(p_state,player):
     # Tính điểm cho Comp
     for id in id_player:
         xx,yy = convert_to_2D(id)
-        
+
         # ĐẾM THEO HÀNG NGANG --
 
         # Kiểm tra xem tọa độ của điểm có trong trường hợp "tệ" hay không
@@ -131,7 +131,7 @@ def evaluate(p_state,player):
             # Nếu gặp phần tử trắng thì cập nhật số lượng
             if id%NUMBER_COLS+i<NUMBER_COLS and  p_state[id+i] == 0:
                 nSpace += 1
-            
+
             # Sau khi duyện hết 4 phần tử, cập nhật số lượng các chuỗi
             if i == 4 and id%NUMBER_COLS+i<NUMBER_COLS:
                 # Trường hợp xấu nhất nếu phần tử thứ 4 rơi vào cột cuối cùng của bảng và có ký tự máy ( Ví dụ __xx_xx| ) -> Bị chặn 1 đầu
@@ -157,7 +157,7 @@ def evaluate(p_state,player):
                         else:
                             if a:
                                 num3_Comp_Block += 1
-                            else: 
+                            else:
                                 num3_Comp += 1
                     elif i - nSpace == 3:
                         # Trường hợp đặc biệt, kể cả có ký tự người ở trước hay không thì 4 ký tự máy trong 5 ô liên tiếp vẫn có thể bị block
@@ -295,7 +295,7 @@ def evaluate(p_state,player):
                     elif i - nSpace -1 == 3:
                         num4_Comp_Block += 1
                     break
-        
+
         # ĐẾM THEO ĐƯỜNG CHÉO C1 \
         b = False
         if yy > 0 and xx > 0 and p_state[id-1-NUMBER_COLS] == player%2+1:
@@ -389,7 +389,7 @@ def evaluate(p_state,player):
                     elif i - nSpace - 1 == 3:
                         num4_Comp_Block += 1
                     break
-        
+
         # ĐẾM THEO ĐƯỜNG CHÉO C2 /
         b = False
         if yy + 1 < NUMBER_COLS and xx > 0 and p_state[id+1-1*NUMBER_COLS] == (player)%2+1:
@@ -483,7 +483,7 @@ def evaluate(p_state,player):
                     elif i - nSpace - 1== 3:
                         num4_Comp_Block += 1
                     break
-        
+
         if xx + 1 < NUMBER_ROWS and p_state[id+1*NUMBER_COLS] == (player+1)%2+1:
             near_By_Comp += 1
         if yy + 1 < NUMBER_COLS and p_state[id+1] == (player+1)%2+1:
@@ -506,7 +506,7 @@ def evaluate(p_state,player):
     id_enermy= np.where(p_state[0:NUMBER_ACTIONS]==((player+1)%2+1))[0]
     for id in id_enermy:
         xx,yy= convert_to_2D(id)
-        
+
         # ĐẾM THEO HÀNG NGANG --
         b = False
         if yy > 0 and p_state[id-1]== (player+1)%2+1:
@@ -545,11 +545,11 @@ def evaluate(p_state,player):
                             if yy - 2 >= 0 and  p_state[id-2] == 0:
                                 num3_Human += 1
                             else:
-                                num3_Human_Block += 1 
+                                num3_Human_Block += 1
                     break
             if yy + i < NUMBER_COLS and p_state[id+i] == 0:
                 nSpace += 1
-            
+
             if i == 4 and yy + i < NUMBER_COLS:
                 if yy + i == NUMBER_COLS - 1 and p_state[id+i] == (player+1)%2+1:
                     if i - nSpace == 3:
@@ -571,7 +571,7 @@ def evaluate(p_state,player):
                         else:
                             if a:
                                 num3_Human_Block += 1
-                            else: 
+                            else:
                                 num3_Human += 1
                     elif i - nSpace == 3:
                         if p_state[id+i] == (player+1)%2+1:
@@ -598,7 +598,7 @@ def evaluate(p_state,player):
                                 num3_Human_Block += 1
                             elif yy - 2 >= 0 and p_state[id-2] == 0:
                                 num3_Human_Block += 1
-                    elif i - nSpace - 1== 3: 
+                    elif i - nSpace - 1== 3:
                         num4_Human_Block += 1
                     break
 
@@ -696,7 +696,7 @@ def evaluate(p_state,player):
                     elif i - nSpace -1 == 3:
                         num4_Human_Block += 1
                     break
-        
+
         # ĐẾM THEO ĐƯỜNG CHÉO C1 \
         b = False
         if yy > 0 and xx > 0 and p_state[id-1-NUMBER_COLS] == (player+1)%2+1:
@@ -790,7 +790,7 @@ def evaluate(p_state,player):
                     elif i - nSpace - 1 == 3:
                         num4_Human_Block += 1
                     break
-        
+
         # ĐẾM THEO ĐƯỜNG CHÉO C2 /
         b = False
         if yy + 1 < NUMBER_COLS and xx > 0 and p_state[id+1-1*NUMBER_COLS] == (player+1)%2+1:
@@ -884,7 +884,7 @@ def evaluate(p_state,player):
                     elif i - nSpace - 1== 3:
                         num4_Human_Block += 1
                     break
-        
+
         if xx + 1 < NUMBER_ROWS and p_state[id+1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
         if yy + 1 < NUMBER_COLS and p_state[id+1] == (player)%2+1:
@@ -901,7 +901,7 @@ def evaluate(p_state,player):
             near_By_Human += 1
         if yy > 0 and xx > 0 and p_state[id-1-1*NUMBER_COLS] == (player)%2+1:
             near_By_Human += 1
-    
+
 
     # Công thức tính điểm bàn cờ của hàm heuristic h(n)
 
@@ -927,10 +927,10 @@ def evaluate(p_state,player):
                 #    x                     x                     x                    x
                 #    x                     x                     x                    x
                 #    _ooox                 oooox                xoooox               xooox
-        ### Thậm chí máy còn có thể thua ngược nếu như không có quân x ở cuối chuỗi 3 
+        ### Thậm chí máy còn có thể thua ngược nếu như không có quân x ở cuối chuỗi 3
         if num3_Comp >= 2 and num3_Human == 0 and num3_Human_Block == 0:
             return 555555555555555555
-        
+
         # Công thức tính điểm tổng quát dưới đây trong trường hợp 2 bên chưa chắc ai thắng có thể sẽ gặp nhiều sai sót, trong quá trình làm việc sẽ tiếp tục cập nhật
         # và đánh giá thay đổi hệ số của các chuỗi mỗi quân cờ
         total_Score_Comp = 2 * near_By_Comp + 20 * num2_Comp_Block + 100 * num2_Comp + 3000 * num3_Comp_Block + 300000 * num3_Comp + num4_Comp_Block * 30000000
@@ -991,7 +991,7 @@ def minimax(p_state, depth, alpha, beta, player):
     # Nước vừa đánh
     id= convert_to_1D(p_state[NUMBER_COLS*NUMBER_ROWS],p_state[NUMBER_COLS*NUMBER_ROWS+1])
 
-   
+
     if turn%2 == player:
         best = [-1, -math.inf]
     else:
@@ -1000,16 +1000,16 @@ def minimax(p_state, depth, alpha, beta, player):
     if depth == 0 or check_ended(p_state) != -1:
         sc = evaluate(p_state, player)
         return [-1, sc]
-   
+
     val_act = np.where(p_state[0:NUMBER_ACTIONS]==0)[0]
     for act in val_act:
-       
+        act=int(act)
         # Bỏ qua nếu tọa độ đưa vào đủ " tệ "
         if checkBad_Point(act,p_state):
             continue
         # Nhét nước đi này vào kho chứa các nước đã đi của player để có thể đánh giá bàn cờ ở hàm evaluate(state, player, x, y)
         env = next_step(act,p_state)
-        
+
         score = minimax(env, depth - 1, alpha, beta, player)
         score[0]= act
         # Cập nhật alpha và beta sau mỗi lần tìm kiếm trong 1 nhánh của minimax
@@ -1024,22 +1024,22 @@ def minimax(p_state, depth, alpha, beta, player):
 
         if beta <= alpha:
             break  # Cắt tỉa alpha - beta
-    
+    best[0]=int(best[0])
     return best
 
 @njit
 def numba_bot_greedy(p_state, per):
 
-    turn = np.count_nonzero(p_state[0:NUMBER_ACTIONS]) 
+    turn = np.count_nonzero(p_state[0:NUMBER_ACTIONS])
 
     if(turn==0):
         return np.random.randint(0, NUMBER_ACTIONS),per
     p_state[NUMBER_COLS*NUMBER_ROWS+2]=turn
     player= turn%2
-    depth = 4 
+    depth = 4
 
     move = minimax(p_state, depth, -math.inf, math.inf, player)
-    act_idx=move[0]
+    act_idx=int(move[0])
     return act_idx, per
 
 
