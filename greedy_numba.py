@@ -981,6 +981,7 @@ def checkBad_Point(act, p_state):
     # 8
     if yy > 0 and xx > 0 and p_state[act-1-NUMBER_COLS] != 0:
         return False
+    return True
 
 @njit
 def minimax(p_state, depth, alpha, beta, player):
@@ -1023,6 +1024,7 @@ def minimax(p_state, depth, alpha, beta, player):
 
         if beta <= alpha:
             break  # Cắt tỉa alpha - beta
+    
     return best
 
 @njit
