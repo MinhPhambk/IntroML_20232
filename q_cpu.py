@@ -79,8 +79,6 @@ def q_bot_cpu(p_state, per):
             per[next_q_idx] = make_new_q_value(next_state)
 
         #cập nhật điểm số cho trạng thái hiện tại
-        print(q_idx,per[q_idx])
-        print(next_q_idx,per[next_q_idx])
         per[q_idx][arr_action[act_idx]] = (1-LEARNING_RATE)*per[q_idx][arr_action[act_idx]] + LEARNING_RATE * (next_state_value + DISCOUNT_FACTOR * min(per[next_q_idx].values()))
     
     #lượt của O
@@ -108,8 +106,6 @@ def q_bot_cpu(p_state, per):
             per[next_q_idx] = make_new_q_value(next_state)
 
         #cập nhật điểm số cho trạng thái hiện tại
-        print (q_idx,per[q_idx])
-        print (per[q_idx][arr_action[act_idx]])
         per[q_idx][arr_action[act_idx]] = (1-LEARNING_RATE)*per[q_idx][arr_action[act_idx]] + LEARNING_RATE * (next_state_value + DISCOUNT_FACTOR * max(per[next_q_idx].values()))
 
 
