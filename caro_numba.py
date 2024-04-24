@@ -229,8 +229,41 @@ class MCTS:
             action_probs[child.action_taken] = child.visit_count
         action_probs /= np.sum(action_probs)
         return action_probs
-                
-        
+
+
+## Xác định file per?
+class AlphaGomoku:
+    def __init__(self, model, optimizer, args) -> None:
+        self.model = model
+        self.optimizer = optimizer
+        self.args = args
+        self.mcts = MCTS(args, model)
+
+    ## hàm tự chơi giúp mô hình có dữ liệu để train
+    def selfPlay(self):
+        pass
+
+    def train(self, memory):
+        pass
+
+    def learn(self):
+        for i in range(self.args['num_iterations']):
+            memory = []
+
+            # eval() nhằm frozen các lớp batch, chuyển mô hình sang chế độ đánh giá, không tạo thêm tham số mới, giúp tăng tốc độ gen dữ liệu thay vì điều chỉnh tham số.
+            self.model.eval()
+            for selfPlay_i in range(self.args['num_selfPlay_iterations']):
+                memory += self.selfPlay()
+            
+            # train() giúp mô hình quay trở lại trạng thái huấn luyện, điều chỉnh các tham số
+            self.model.train()
+            for epoch in range(self.args['num_epochs']):
+                self.train(memory)
+
+            # Lưu lại các thông tin trạng thái của mô hình huấn luyện như trọng số, bias...
+            torch.save(self.model.state_dict(), f"model_{i}.pt")
+            torch.save(self.optimizer.state_dict(), f"optimizer_{i}.pt")
+
 
 from numba import njit
 import warnings
@@ -385,7 +418,7 @@ def next_step(action, env_state):
 
     return env
 
-@njit
+@njit()
 def numba_bot_random(p_state, per):
     arr_action = get_valid_actions(p_state)
     act_idx = np.random.choice(np.where(arr_action == 1)[0])
@@ -429,7 +462,7 @@ def numba_run_one_game(p_main, p_o, per, print_mode = False):
         winner = -1
     return winner, per
 
-@njit
+@njit()
 def numba_run_n_game(p0, p1, per, num_game, print_mode = False):
     win = [0, 0]
     for _n in range(num_game):
@@ -469,6 +502,8 @@ def print_env(env):
 # Hàm test MCTS
 def one_game_pvc():
     model = ResNet(4, 64)
+    model.eval()
+    print(model.resnet.training)
     mcts = MCTS(args, model)
     env = init_env()
     while True:
