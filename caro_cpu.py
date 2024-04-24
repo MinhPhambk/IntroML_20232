@@ -40,7 +40,7 @@ def get_agent_state(env_state):
     # Get last checked cell
     p_state[NUMBER_ROWS * NUMBER_COLS] = env_state[NUMBER_ROWS * NUMBER_COLS]
     p_state[NUMBER_ROWS * NUMBER_COLS + 1] = env_state[NUMBER_ROWS * NUMBER_COLS + 1]
-
+    p_state[NUMBER_ROWS * NUMBER_COLS + 2] = env_state[NUMBER_ROWS * NUMBER_COLS + 2]
     return p_state
 
 def get_valid_actions(player_state):
