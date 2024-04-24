@@ -12,7 +12,7 @@ for p in range(1):
     start_time  = time.time()
     try:
         #đọc file per từ file txt
-        with open('q_table' + NUMBER_COLS + '.txt', 'r') as f:
+        with open('q_table' + str(NUMBER_COLS) + '.txt', 'r') as f:
             for line in f:
                 line = line.strip()
                 key, value_str = line.split(':', 1)
@@ -56,7 +56,7 @@ for p in range(1):
         # lưu bảng Q vào file txt
         print("Lưu bảng Q vào file txt")
         start_time = time.time()
-        with open('q_table'+NUMBER_COLS+'.txt', 'w') as f:
+        with open('q_table'+str(NUMBER_COLS)+'.txt', 'w') as f:
             #ghi theo dạng key: value
             for key, value in per.items():
                 f.write('%s:%s\n' % (key, value))
