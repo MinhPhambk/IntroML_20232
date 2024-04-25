@@ -139,7 +139,7 @@ class Node:
                 # act = np.random.choice(np.where(self.expandable_moves == 1)[0])
                 # self.expandable_moves[act] = 0
                 child_env = next_step(act, self.env)
-                child_env = change_perspective(child_env)
+                child_env = change_perspective(child_env, 1)
                 child = Node(self.args, child_env, self, act, prob)
                 self.children.append(child)
                 # return child
@@ -241,7 +241,29 @@ class AlphaGomoku:
 
     ## hàm tự chơi giúp mô hình có dữ liệu để train
     def selfPlay(self):
-        pass
+        memory = []
+        env = init_env()
+        player = 0
+        while True:
+            neutral_env = change_perspective(env, player)
+            action_pro = self.mcts.search(neutral_env)
+            memory.append((neutral_env, action_pro, player))
+            action = np.random.choice(NUMBER_ACTIONS, p=action_pro)
+            env = next_step(action, env)
+            value = check_ended(env)
+
+            if value != -1:
+                returnMemory = []
+                for his_env, his_act_prob, his_player in memory:
+                    his_outcome = value if his_player == player else get_opponent_value(value)
+                    returnMemory.append((
+                        get_encode_state(his_env),
+                        his_act_prob,
+                        his_outcome
+                    ))
+                return returnMemory
+            player = get_opponent_player(player)
+
 
     def train(self, memory):
         pass
@@ -277,7 +299,10 @@ warnings.simplefilter('ignore', category = NumbaWarning)
 # Biến chứa các hằng phục vụ cho MCTS
 args = {
     'C' : 2,
-    'num_searches': 1000
+    'num_searches': 1000,
+    'num_iterations': 3,
+    'num_selfPlay_iterations': 10,
+    'num_epochs': 4
 }
 
 NUMBER_ROWS = 15
@@ -314,6 +339,13 @@ def convert_to_2D(act):
     y = act - x * NUMBER_COLS
     return x, y
 
+@njit()
+def get_opponent_player(player):
+    return 1 if player == 0 else 0
+
+@njit()
+def get_opponent_value(value):
+    return -value
 @njit()
 def get_agent_state( env_state):
     p_state = np.full(STATE_SIZE, 0)
@@ -484,9 +516,11 @@ def numba_run_n_game(p0, p1, per, num_game, print_mode = False):
 
 ## Hàm này biến đổi góc nhìn env (hay state) của bàn cờ đối với mỗi node
 ## Với mỗi Node, ta coi như lượt đi hiện tại là x (hay 1)?? 
-@njit
-def change_perspective(env):
+@njit()
+def change_perspective(env, player):
     n_env = np.copy(env)
+    if player == 0:
+        return n_env
     temp = np.where(n_env[0 : NUMBER_ROWS * NUMBER_COLS] == 2)
     n_env[np.where(n_env[0 : NUMBER_ROWS * NUMBER_COLS] == 1)] = 2
     n_env[temp] = 1
@@ -516,7 +550,7 @@ def one_game_pvc():
                 print("action not valid")
                 continue
         else:
-            neutral_state = change_perspective(env)
+            neutral_state = change_perspective(env, 1)
             mcts_probs = mcts.search(neutral_state)
             act = np.argmax(mcts_probs)
 
