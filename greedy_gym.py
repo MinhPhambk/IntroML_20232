@@ -984,9 +984,6 @@ def minimax(p_state, depth, alpha, beta, player):
     # Lượt hiện tại
     turn = p_state[NUMBER_COLS*NUMBER_ROWS+2]
 
-    # Nước vừa đánh
-    id= convert_to_1D(p_state[NUMBER_COLS*NUMBER_ROWS],p_state[NUMBER_COLS*NUMBER_ROWS+1])
-
    
     if turn%2 == player:
         best = [-1, -math.inf]
