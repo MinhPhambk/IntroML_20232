@@ -1,7 +1,7 @@
 """
     Import Thư viện
 """
-from tqdm.notebook import trange
+from tqdm import tqdm
 import time
 from numba import types, typed, int64, optional, deferred_type, float64
 from numba.experimental import jitclass
@@ -543,6 +543,7 @@ class AlphaGomoku:
               value = check_ended(env)
 
               if value != -1:
+                  value = 0 if value == 2 else 1
                   returnMemory = []
                   for his_env, his_act_prob, his_player in memory:
                       his_outcome = value if his_player == player else get_opponent_value(value)
@@ -568,8 +569,6 @@ class AlphaGomoku:
 
             out_policy, out_value = self.model(states)
 
-            ## Nên thêm hàm này vào không?
-            # out_policy = torch.softmax(out_policy, 1)
 
             # Đánh giá sự mất mát của hàm cross_entropy ( hàm đo lường mức độ tương tự giữa phân phối xác suất của mạng đưa ra và phân phối thực tế )
             policy_loss = F.cross_entropy(out_policy, policy_targets)
@@ -590,11 +589,11 @@ class AlphaGomoku:
         for i in range(self.args['num_iterations']):
             memory = []
             self.model.eval()
-            for selfPlay_i in trange(self.args['num_selfPlay_iterations']):
+            for selfPlay_i in tqdm(range(self.args['num_selfPlay_iterations'])):
                 memory += self.selfPlay()
 
             self.model.train()
-            for epoch in trange(self.args['num_epochs']):
+            for epoch in tqdm(range(self.args['num_epochs'])):
                 self.train(memory)
 
             torch.save(self.model.state_dict(), f"model_{i}.pt")
@@ -618,7 +617,7 @@ def get_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # Có thể sử dụng load_state_dict để lấy model cũ tiếp tục huấn luyện
-    # model.load_state_dict(torch.load('model_1.pt'))
+    # model.load_state_dict(torch.load('model_0.pt'))
     model = ResNet(4, 64, device)
     optimizer = torch.optim.Adam(model.parameters(), lr = 0.001, weight_decay = 0.0001)
 
@@ -640,3 +639,46 @@ def get_model():
     alphaGomoku = AlphaGomoku(model, optimizer, args, args_f)
     return alphaGomoku
     # alphaGomoku.learn()
+
+## Test MCTS
+args = typed.Dict()
+args['C'] = 2
+args['num_searches'] = 20
+args['num_iterations'] = 2
+args['num_selfPlay_iterations'] = 5
+args['num_epochs'] = 4
+args['batch_size'] = 64
+
+args_f = typed.Dict()
+args_f['temperature'] = 1.25
+args_f['dirichlet_esp'] = 0.25
+args_f['dirichlet_alp'] = 0.35
+def one_game_pvc():
+    model = ResNet(4, 64, device = torch.device("cuda" if torch.cuda.is_available() else "cpu"))
+    model.eval()
+    mcts = MCTS(args, args_f, model)
+    env = init_env()
+    while True:
+        if env[NUMBER_ROWS * NUMBER_COLS + 2] % 2 == 0:
+            valid_moves = get_valid_actions(env)
+            act = int(input("Choose action: "))
+            if valid_moves[act] == 0:
+                print("action not valid")
+                continue
+        else:
+            neutral_state = change_perspective(env, 1)
+            mcts_probs = mcts.search(neutral_state)
+            act = np.argmax(mcts_probs)
+
+        env = next_step(act, env)
+        check_end = check_ended(env)
+        if check_end != -1:
+            if check_end == 2:
+                print('\n---------------------- All tie! ----------------------')
+            elif check_end == 0:
+                print('\n---------------------- Winner: Human ----------------------')
+            elif check_end == 1:
+                print('\n---------------------- Winner: Comp ----------------------')
+
+            break
+one_game_pvc()
