@@ -1,35 +1,25 @@
 #khởi tạo 1 ma trận 15x15 ngẫu nhiên
 import numpy as np
 import math
+import tensorflow as tf
 from caro_cpu import get_valid_actions, next_step, check_ended, NUMBER_COLS, NUMBER_ROWS, next_step
 from evaluate_for_q import evaluate
 #khởi tạo điểm cho các trường hợp thắng, thua, hoà
-WIN_REWARD = 100000000000000000000
-LOSE_REWARD = -100000000000000000000
-TIE_REWARD = NOT_END = 0
+WIN_REWARD = 100
+LOSE_REWARD = -100
+TIE_REWARD = -10
+NOT_END = 0
 LEARNING_RATE = 0.8
 DISCOUNT_FACTOR = 0.9
-EPSILON = 0.21102003
+EPSILON = 0.0
 RANGE = NUMBER_COLS * NUMBER_ROWS
 
 
 q_table = {} # rỗng
-def make_random_q_table(n):
-    for i in range(n):
-        #tạo mảng 228 phần tử ngẫu nhiên từ 0-2
-        state = np.random.randint(0, 3, NUMBER_COLS * NUMBER_ROWS + 3)
-        #chuyển RANGE kí tự đầu tiên thành string để làm key
-        q_idx = str(state[:RANGE]).replace(" ", "").replace("[", "").replace("]", "").replace("\n", "")
-        #mỗi key q_idx bao gồm các cặp key-value, key là action, value là điểm số
-        q_table[q_idx] = make_new_q_value(state)
-    return q_table
-
-#tạo 1 dòng Q cho trạng thái mới, nếu trạng thái là trạng thái kết thúc thì trả về điểm số cho trạng thái đó
 def make_new_q_value(p_state):
     new_q_value = {}
-    p_id = p_state[NUMBER_ROWS*NUMBER_COLS+2]%2
+    p_id = p_state[NUMBER_ROWS*NUMBER_COLS+2] % 2
     new_q_value_score = evaluate(p_state, p_id)
-    #tạo ra dòng mới với điểm số cho từng action = điểm số của trạng thái mới * 1000000
     if new_q_value_score == math.inf:
         new_q_value[1] = WIN_REWARD
         return new_q_value
@@ -39,11 +29,19 @@ def make_new_q_value(p_state):
     for i in range(NUMBER_COLS * NUMBER_ROWS):
         if p_state[i] == 0:
             new_q_value[i] = new_q_value_score
-        #NẾU dòng mới rỗng thì tạo ra 1 dòng mới với 1 action = 0
     if len(new_q_value) == 0:
         new_q_value[1] = 0
     return new_q_value
 
+def make_random_q_table(n):
+    for i in range(n):
+        state = tf.random.uniform([NUMBER_COLS * NUMBER_ROWS + 3], minval=0, maxval=3, dtype=tf.int64)
+        state_np = state.numpy()
+        q_idx = tuple(state_np.tolist())  # Convert to tuple to make it hashable
+        q_table[q_idx] = make_new_q_value(state)
+    return q_table
+
+make_random_q_table(100)
 
 #q-learning sử dụng heuristic của Khải
 def q_bot_cpu(p_state, per):
@@ -79,8 +77,6 @@ def q_bot_cpu(p_state, per):
             per[next_q_idx] = make_new_q_value(next_state)
 
         #cập nhật điểm số cho trạng thái hiện tại
-        print(q_idx,per[q_idx])
-        print(next_q_idx,per[next_q_idx])
         per[q_idx][arr_action[act_idx]] = (1-LEARNING_RATE)*per[q_idx][arr_action[act_idx]] + LEARNING_RATE * (next_state_value + DISCOUNT_FACTOR * min(per[next_q_idx].values()))
     
     #lượt của O
@@ -108,8 +104,6 @@ def q_bot_cpu(p_state, per):
             per[next_q_idx] = make_new_q_value(next_state)
 
         #cập nhật điểm số cho trạng thái hiện tại
-        print (q_idx,per[q_idx])
-        print (per[q_idx][arr_action[act_idx]])
         per[q_idx][arr_action[act_idx]] = (1-LEARNING_RATE)*per[q_idx][arr_action[act_idx]] + LEARNING_RATE * (next_state_value + DISCOUNT_FACTOR * max(per[next_q_idx].values()))
 
 
